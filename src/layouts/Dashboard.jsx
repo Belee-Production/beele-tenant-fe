@@ -1,6 +1,6 @@
 import { DashboardFooter, DashboardSider } from '@/components';
 import { useAuth } from '@/hooks';
-import { LogoutOutlined, MenuOutlined, UserOutlined } from '@ant-design/icons';
+import { LogoutOutlined, MenuOutlined, SettingOutlined } from '@ant-design/icons';
 import { Avatar, Button, Dropdown, Layout, Skeleton, Space, theme } from 'antd';
 import { Content, Header } from 'antd/es/layout/layout';
 import { useEffect, useMemo, useState } from 'react';
@@ -24,9 +24,9 @@ const Dashboard = () => {
       {
         key: '1',
         label: (
-          <button onClick={() => navigate('/dashboard/profile-settings')} className="flex min-w-32 items-center gap-x-2">
-            <UserOutlined />
-            Pengaturan Profil
+          <button onClick={() => navigate('/dashboard/settings')} className="flex min-w-32 items-center gap-x-2">
+            <SettingOutlined />
+            Pengaturan
           </button>
         )
       },
