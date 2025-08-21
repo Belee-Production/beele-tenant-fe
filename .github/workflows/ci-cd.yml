@@ -1,0 +1,172 @@
+# Nama file: .github/workflows/deploy-tenant-frontend.yml
+# Workflow ini akan mengambil daftar tenant aktif dari API,
+# lalu men-deploy frontend untuk setiap tenant secara individual.
+
+name: CI/CD Pipeline for Tenant Frontend
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+
+jobs:
+  # ===================================================================
+  # ## JOB 1: Build Frontend ##
+  # ===================================================================
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Cache Node Modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build React App
+        run: npm run build
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: react-build-artifact
+          path: build/
+
+  # ===================================================================
+  # ## JOB 2: Deploy ke Server untuk Setiap Tenant ##
+  # ===================================================================
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    # Definisikan environment berdasarkan branch
+    outputs:
+      API_URL: ${{ steps.set_env.outputs.API_URL }}
+      DOMAIN_SUFFIX: ${{ steps.set_env.outputs.DOMAIN_SUFFIX }}
+      BASE_PATH: ${{ steps.set_env.outputs.BASE_PATH }}
+      BACKEND_DOMAIN_SUFFIX: ${{ steps.set_env.outputs.BACKEND_DOMAIN_SUFFIX }}
+
+    steps:
+      - name: Set Environment Variables
+        id: set_env
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "API_URL=https://api-backend.belee.id/api/tenant/deploying?status=aktif" >> $GITHUB_OUTPUT
+            echo "DOMAIN_SUFFIX=belee.id" >> $GITHUB_OUTPUT
+            echo "BASE_PATH=/www/wwwroot/belee/production" >> $GITHUB_OUTPUT
+            echo "BACKEND_DOMAIN_SUFFIX=belee.id" >> $GITHUB_OUTPUT
+          else
+            echo "API_URL=https://api-staging.matlhy.my.id/api/tenant/deploying?status=aktif" >> $GITHUB_OUTPUT
+            echo "DOMAIN_SUFFIX=staging.matlhy.my.id" >> $GITHUB_OUTPUT
+            echo "BASE_PATH=/www/wwwroot/belee/staging" >> $GITHUB_OUTPUT
+            echo "BACKEND_DOMAIN_SUFFIX=staging.matlhy.my.id" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: react-build-artifact
+          path: build/
+
+      - name: Setup SSH Agent
+        uses: webfactory/ssh-agent@v0.5.4
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+
+      - name: Deploy to Server
+        run: |
+          # 1. Salin hasil build ke lokasi sementara di server (satu kali)
+          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./build/ root@151.106.113.166:/tmp/latest_frontend_build/
+
+          # 2. Ambil daftar tenant dari API
+          TENANT_JSON=$(curl -s -H "Authorization: Bearer ${{ secrets.CHATBOT_API_TOKEN }}" "${{ steps.set_env.outputs.API_URL }}")
+
+          # 3. Jalankan skrip deployment di server
+          ssh -o StrictHostKeyChecking=no root@151.106.113.166 "
+            # Teruskan variabel yang dibutuhkan ke dalam skrip SSH
+            TENANT_JSON='${TENANT_JSON}'
+            DOMAIN_SUFFIX='${{ steps.set_env.outputs.DOMAIN_SUFFIX }}'
+            BASE_PATH='${{ steps.set_env.outputs.BASE_PATH }}'
+            BACKEND_DOMAIN_SUFFIX='${{ steps.set_env.outputs.BACKEND_DOMAIN_SUFFIX }}'
+
+            # Pastikan jq terinstal di server
+            if ! command -v jq &> /dev/null; then
+              echo 'jq could not be found, attempting to install...'
+              apt-get update && apt-get install -y jq
+            fi
+
+            # Validasi respons JSON sebelum diproses
+            if ! echo \"\${TENANT_JSON}\" | jq -e . > /dev/null; then
+              echo \"Error: API response is not a valid JSON.\"
+              echo \"API Response: \${TENANT_JSON}\"
+              exit 1
+            fi
+
+            # Deploy ke Base-Tenant Terlebih Dahulu
+            BASE_TENANT_PATH=\"\${BASE_PATH}/base-tenant.\${DOMAIN_SUFFIX}\"
+            echo \"---> Deploying to base-tenant template: \${BASE_TENANT_PATH}\"
+            mkdir -p \"\${BASE_TENANT_PATH}\"
+            cp -r /tmp/latest_frontend_build/* \"\${BASE_TENANT_PATH}/\"
+            # PERBAIKAN: Tambahkan flag -f untuk mengabaikan error permission
+            chown -R www:www \"\${BASE_TENANT_PATH}\"
+
+            BASE_USER_INI_FILE=\"\${BASE_TENANT_PATH}/.user.ini\"
+            if [ -f \"\${BASE_USER_INI_FILE}\" ]; then chattr -i \"\${BASE_USER_INI_FILE}\"; fi
+            chown -R www:www \"\${BASE_TENANT_PATH}\"
+            if [ -f \"\${BASE_USER_INI_FILE}\" ]; then chattr +i \"\${BASE_USER_INI_FILE}\"; fi
+
+            # Periksa apakah .data adalah array sebelum melakukan loop
+            if echo \"\${TENANT_JSON}\" | jq -e '.data | type == \"array\"' > /dev/null; then
+              echo \"---> Found tenants to deploy.\"
+              echo \"\${TENANT_JSON}\" | jq -c '.data[]' | while read tenant; do
+                # Ekstrak data dari setiap objek tenant
+                TENANT_ID=\$(echo \"\${tenant}\" | jq -r '.id')
+                PENDAFTAR_DOMAIN=\$(echo \"\${tenant}\" | jq -r '.pendaftar.domain')
+
+                # Periksa apakah domain pendaftar valid
+                if [ -z \"\${PENDAFTAR_DOMAIN}\" ] || [ \"\${PENDAFTAR_DOMAIN}\" == \"null\" ]; then
+                  echo \"---> WARNING: Skipping tenant \${TENANT_ID} because pendaftar.domain is empty or null.\"
+                  continue # Lanjutkan ke tenant berikutnya
+                fi
+
+                # Buat nama domain dan path folder yang benar
+                FOLDER_NAME=\$(echo \"\${PENDAFTAR_DOMAIN}\" | sed 's/[^a-zA-Z0-9]/-/g' | tr '[:upper:]' '[:lower:]')
+                TENANT_DOMAIN=\"\${FOLDER_NAME}.\${DOMAIN_SUFFIX}\"
+                TENANT_PATH=\"\${BASE_PATH}/\${TENANT_DOMAIN}\"
+                
+                # Buat URL backend yang benar
+                BACKEND_URL=\"https://\${TENANT_ID}.\${BACKEND_DOMAIN_SUFFIX}\"
+
+                echo \"---> Deploying for tenant \${TENANT_ID} to \${TENANT_PATH}\"
+
+                # Buat direktori tenant
+                mkdir -p \"\${TENANT_PATH}\"
+
+                # Salin file dari build sementara
+                cp -r /tmp/latest_frontend_build/* \"\${TENANT_PATH}/\"
+
+                # Buat file config.js secara dinamis
+                echo \"window.runtimeConfig = { apiUrl: '\${BACKEND_URL}' };\" > \"\${TENANT_PATH}/config.js\"
+
+                # Atur izin akses
+                # --- PERBAIKAN: Hapus '-f' untuk melihat error chown ---
+                TENANT_USER_INI_FILE=\"\${TENANT_PATH}/.user.ini\"
+                if [ -f \"\${TENANT_USER_INI_FILE}\" ]; then chattr -i \"\${TENANT_USER_INI_FILE}\"; fi
+                chown -R www:www \"\${TENANT_PATH}\"
+                if [ -f \"\${TENANT_USER_INI_FILE}\" ]; then chattr +i \"\${TENANT_USER_INI_FILE}\"; fi
+              done
+            else
+              echo \"---> No tenants found in API response. Skipping individual tenant deployment.\"
+            fi
+            "

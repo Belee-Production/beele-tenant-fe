@@ -1,7 +1,13 @@
 import { PAGINATION_ALL } from '@/constants';
 
-const baseUrl = import.meta.env.VITE_BASE_URL;
-export const BASE_URL = `${baseUrl}/api`;
+// Coba baca URL API dinamis yang disuntikkan oleh server dari file config.js
+const dynamicApiUrl = window.runtimeConfig?.apiUrl;
+
+// Siapkan URL cadangan dari file .env untuk development lokal
+const fallbackApiUrl = `${import.meta.env.VITE_BASE_URL}/api`;
+
+// Gunakan URL dinamis jika ada. Jika tidak, gunakan URL cadangan.
+export const BASE_URL = dynamicApiUrl || fallbackApiUrl;
 
 const controllers = {};
 
