@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-const StoreProfileContext = createContext({
+const StoreOwnerContext = createContext({
   data: null,
   isLoading: false,
   isSuccess: false,
@@ -9,4 +9,4 @@ const StoreProfileContext = createContext({
   refetch: () => {}
 });
 
-export default StoreProfileContext;
+export default StoreOwnerContext;
