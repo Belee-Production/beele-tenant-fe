@@ -1,30 +1,15 @@
-import { useAuth, useService } from '@/hooks';
-import { StoreProfileService } from '@/services';
+import { useStoreProfile } from '@/hooks/useStoreProfile';
 import dateFormatter from '@/utils/dateFormatter';
 import getInitials from '@/utils/getInitials';
 import { EnvironmentOutlined, FacebookFilled, FieldTimeOutlined, InstagramFilled, ShopOutlined, YoutubeFilled } from '@ant-design/icons';
-import { Avatar, Card, Skeleton, Typography } from 'antd';
-import { useCallback, useEffect } from 'react';
+import { Alert, Avatar, Card, Skeleton, Typography } from 'antd';
 
 const Dashboard = () => {
-  const { token } = useAuth();
-  const { execute, ...getAllStoreProfile } = useService(StoreProfileService.getAll);
-
-  const fetchStoreProfile = useCallback(() => {
-    execute({
-      token: token
-    });
-  }, [execute, token]);
-
-  useEffect(() => {
-    fetchStoreProfile();
-  }, [fetchStoreProfile, token]);
-
-  const storeProfile = getAllStoreProfile.data ?? {};
+  const { data: storeProfile, isLoading } = useStoreProfile();
 
   return (
     <div className="grid grid-cols-12 gap-4">
-      {getAllStoreProfile.isLoading ? (
+      {isLoading ? (
         <>
           <Card className="col-span-10" cover={<img src="/image_asset/card_background.png" className="h-32 object-cover" />}>
             <div className="relative px-4">
@@ -98,6 +83,7 @@ const Dashboard = () => {
         </>
       ) : (
         <>
+          {storeProfile?.completeness_status == 0 && <Alert className="col-span-12" description="Data toko anda masih belum lengkap, lengkapi data toko anda terlebih dahulu agar dapat menikmati fitur dari Belee." type="warning" showIcon closable />}
           <Card className="col-span-10" cover={<img src="/image_asset/card_background.png" className="h-32 object-cover" />}>
             <div className="relative px-4">
               <div className="absolute -top-16">
@@ -107,9 +93,9 @@ const Dashboard = () => {
             <div className="flex gap-x-6 px-4">
               <div className="mt-12 flex w-full flex-col gap-y-1 px-4">
                 <Typography.Title level={4} style={{ margin: 0 }}>
-                  {storeProfile.store_name}
+                  {storeProfile?.store_name}
                 </Typography.Title>
-                <Typography.Text>{storeProfile.desc}</Typography.Text>
+                <Typography.Text>{storeProfile?.desc}</Typography.Text>
               </div>
               <div className="flex items-center gap-x-2">
                 <InstagramFilled className="text-2xl text-red-500" />
@@ -154,7 +140,7 @@ const Dashboard = () => {
                 {getInitials(storeProfile?.owner_name)}
               </Avatar>
               <Typography.Title level={5} style={{ textAlign: 'center', margin: 0 }}>
-                {storeProfile.owner_name}
+                {storeProfile?.owner_name}
               </Typography.Title>
             </div>
           </Card>

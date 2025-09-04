@@ -5,16 +5,15 @@ import asset from '@/utils/asset';
 export interface IncomingApiData {
   id: number;
   nama_toko: string;
-  nama_pemilik: string;
-  tagline: string;
-  deskripsi: string;
+  tagline: string | null;
+  deskripsi: string | null;
   kategori_id: {
     id: number;
     nama_kategori: string;
     tipe_kategori: string;
-  };
+  } | null;
   email: string;
-  telepon: string;
+  telepon: string | null;
   logo: string;
   status_kelengkapan: boolean;
   created_at: string;
@@ -23,7 +22,6 @@ export interface IncomingApiData {
 
 interface FormValue {
   store_name: string;
-  owner_name: string;
   tagline: string;
   desc: string;
   category_id: string;
@@ -34,7 +32,6 @@ interface FormValue {
 
 export interface OutgoingApiData {
   nama_toko: string;
-  nama_pemilik: string;
   tagline: string;
   deskripsi: string;
   kategori_id: string;
@@ -49,16 +46,15 @@ export default class StoreProfile extends Model {
   constructor(
     public id: number,
     public store_name: string,
-    public owner_name: string,
-    public tagline: string,
-    public desc: string,
+    public tagline: string | null,
+    public desc: string | null,
     public category_id: {
       id: number;
       category_name: string;
       category_type: string;
-    },
+    } | null,
     public email: string,
-    public telp: string,
+    public telp: string | null,
     public logo: string,
     public completeness_status: boolean,
     public created_at: string,
@@ -72,16 +68,17 @@ export default class StoreProfile extends Model {
     return new StoreProfile(
       apiData.id,
       apiData.nama_toko,
-      apiData.nama_pemilik,
-      apiData.tagline,
-      apiData.deskripsi,
-      {
-        id: apiData.kategori_id.id,
-        category_name: apiData.kategori_id.nama_kategori,
-        category_type: apiData.kategori_id.tipe_kategori
-      },
+      apiData.tagline ? apiData.tagline : null,
+      apiData.deskripsi ? apiData.deskripsi : null,
+      apiData.kategori_id
+        ? {
+            id: apiData.kategori_id.id,
+            category_name: apiData.kategori_id.nama_kategori,
+            category_type: apiData.kategori_id.tipe_kategori
+          }
+        : null,
       apiData.email,
-      apiData.telepon,
+      apiData.telepon ? apiData.telepon : null,
       asset(apiData.logo),
       apiData.status_kelengkapan,
       apiData.created_at,
@@ -93,7 +90,6 @@ export default class StoreProfile extends Model {
     if (Array.isArray(storeProfile)) return storeProfile.map((object) => this.toApiData(object)) as ReturnType<T, FormValue, OutgoingApiData>;
     const apiData: OutgoingApiData = {
       nama_toko: storeProfile.store_name,
-      nama_pemilik: storeProfile.owner_name,
       tagline: storeProfile.tagline,
       deskripsi: storeProfile.desc,
       kategori_id: storeProfile.category_id,

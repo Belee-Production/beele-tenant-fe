@@ -1,7 +1,8 @@
 import { DashboardFooter, DashboardSider } from '@/components';
 import { useAuth } from '@/hooks';
+import { useStoreProfile } from '@/hooks/useStoreProfile';
 import { LogoutOutlined, MenuOutlined, SettingOutlined } from '@ant-design/icons';
-import { Avatar, Button, Dropdown, Layout, Skeleton, Space, theme } from 'antd';
+import { Avatar, Badge, Button, Dropdown, Layout, Skeleton, Space, theme } from 'antd';
 import { Content, Header } from 'antd/es/layout/layout';
 import { useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -11,6 +12,7 @@ const Dashboard = () => {
   const { logout, token, user } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const { data: storeProfile } = useStoreProfile();
 
   useEffect(() => {
     if (token) return;
@@ -24,10 +26,12 @@ const Dashboard = () => {
       {
         key: '1',
         label: (
-          <button onClick={() => navigate('/dashboard/settings')} className="flex min-w-32 items-center gap-x-2">
-            <SettingOutlined />
-            Pengaturan
-          </button>
+          <Badge dot={storeProfile?.completeness_status === 0}>
+            <button onClick={() => navigate('/dashboard/settings')} className="flex min-w-32 items-center gap-x-2">
+              <SettingOutlined />
+              Pengaturan
+            </button>
+          </Badge>
         )
       },
       {
@@ -40,7 +44,7 @@ const Dashboard = () => {
         )
       }
     ],
-    [logout, navigate]
+    [logout, navigate, storeProfile?.completeness_status]
   );
 
   const {
@@ -72,7 +76,9 @@ const Dashboard = () => {
                   <Dropdown menu={{ items }}>
                     <a onClick={(e) => e.preventDefault()}>
                       <Space>
-                        <Avatar className="bg-color-primary-100 text-color-primary-500 font-semibold">U</Avatar>
+                        <Badge dot={storeProfile?.completeness_status === 0}>
+                          <Avatar className="bg-color-primary-100 text-color-primary-500 font-semibold">U</Avatar>
+                        </Badge>
                       </Space>
                     </a>
                   </Dropdown>

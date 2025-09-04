@@ -1,13 +1,15 @@
 import { Action } from '@/constants';
+// eslint-disable-next-line no-unused-vars
 import { useAuth } from '@/hooks';
 import strings from '@/utils/strings';
 import { DeleteOutlined } from '@ant-design/icons';
 import { Button, Tooltip } from 'antd';
 import PropTypes from 'prop-types';
 
+// eslint-disable-next-line no-unused-vars
 export default function Delete({ title = strings('delete'), onClick, model, action = Action.DELETE }) {
-  const { user } = useAuth();
-  if (action !== Action.NONE && (!user || user.cant(action, model))) return null;
+  // const { user } = useAuth();
+  // if (action !== Action.NONE && (!user || user.cant(action, model))) return null;
   return (
     <Tooltip title={title}>
       <Button variant="outlined" color="danger" icon={<DeleteOutlined />} onClick={onClick} />

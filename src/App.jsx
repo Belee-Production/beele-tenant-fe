@@ -8,6 +8,7 @@ import './index.css';
 import { flattenLandingLinks } from './utils/landingLink';
 import { Notfound } from './pages/result';
 import { Settings } from './pages/dashboard';
+import { StoreProfileProvider } from './providers';
 
 function App() {
   const { user } = useAuth();
@@ -29,7 +30,13 @@ function App() {
           ]
         },
         {
-          element: <DashboardLayout />,
+          element: (
+            <>
+              <StoreProfileProvider>
+                <DashboardLayout />
+              </StoreProfileProvider>
+            </>
+          ),
           children: [
             ...dashboardLink.flatMap(({ children }) =>
               children.map(({ permissions, roles, path, element: Element }) => {
