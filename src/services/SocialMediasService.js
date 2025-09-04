@@ -1,42 +1,26 @@
 /* eslint-disable no-unused-vars */
-import { Categories, StoreProfile } from '@/models';
+import { SocialMedias } from '@/models';
 import api from '@/utils/api';
 
-export default class StoreProfileService {
+export default class SocialMediasService {
   /**
    * @param {string} token
    * @returns {Promise<{
    *  code: HTTPStatusCode;
    *  status: boolean;
    *  message: string;
-   *  data?: StoreProfile[];
+   *  data?: SocialMedias[];
    * }>}
    * */
   static async getAll({ token, ...filters }) {
     const params = Object.fromEntries(Object.entries(filters).filter(([_, value]) => value !== null && value !== undefined && value !== ''));
-    const response = await api.get('/profil-toko', { token, params });
+    const response = await api.get('/sosial-media', { token, params });
     if (!response.data) return response;
-    return { ...response, data: StoreProfile.fromApiData(response.data) };
+    return { ...response, data: SocialMedias.fromApiData(response.data) };
   }
 
   /**
-   * @param {string} token
-   * @returns {Promise<{
-   *  code: HTTPStatusCode;
-   *  status: boolean;
-   *  message: string;
-   *  data?: StoreProfile[];
-   * }>}
-   * */
-  static async getAllCategories({ token, ...filters }) {
-    const params = Object.fromEntries(Object.entries(filters).filter(([_, value]) => value !== null && value !== undefined && value !== ''));
-    const response = await api.get('/kategori', { token, params });
-    if (!response.data) return response;
-    return { ...response, data: Categories.fromApiData(response.data) };
-  }
-
-  /**
-   * @param {StoreProfile} data
+   * @param {SocialMedias} data
    * @param {string} token
    * @returns {Promise<{
    *  code: HTTPStatusCode;
@@ -45,13 +29,13 @@ export default class StoreProfileService {
    *  errors?: { [key: string]: string[] };
    * }}
    */
-  static async store(data, token, file) {
-    return await api.post('/profil-toko', { body: StoreProfile.toApiData(data), token, file: { logo: file } });
+  static async store(data, token) {
+    return await api.post('/sosial-media', { body: SocialMedias.toApiData(data), token });
   }
 
   /**
    * @param {number} id
-   * @param {StoreProfile} data
+   * @param {SocialMedias} data
    * @param {string} token
    * @returns {Promise<{
    *  code: HTTPStatusCode;
@@ -61,7 +45,7 @@ export default class StoreProfileService {
    * }>}
    */
   static async update(id, data, token) {
-    return await api.patch(`/chatbot/profil-toko/edit/${id}`, { body: StoreProfile.toApiData(data), token });
+    return await api.patch(`/sosial-media/${id}`, { body: SocialMedias.toApiData(data), token });
   }
 
   /**
@@ -74,7 +58,7 @@ export default class StoreProfileService {
    * }>}
    */
   static async delete(id, token) {
-    return await api.delete(`/chatbot/profil-toko/delete/${id}`, { token });
+    return await api.delete(`/sosial-media/${id}`, { token });
   }
 
   /**
@@ -87,6 +71,6 @@ export default class StoreProfileService {
    * }>}
    */
   static async deleteBatch(ids, token) {
-    return await api.delete(`/chatbot/profil-toko/multi-delete/?id=${ids.join(',')}`, { token });
+    return await api.delete(`/sosial-media?ids=${ids.join(',')}`, { token });
   }
 }

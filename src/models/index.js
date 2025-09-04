@@ -3,3 +3,5 @@ export { default as User } from './User';
 export { default as Model } from './Model';
 export { default as StoreProfile } from './StoreProfile';
 export { default as Categories } from './Category';
+export { default as SocialMedias } from './SocialMedias';
+export { default as StoreOwner } from './StoreOwner';
