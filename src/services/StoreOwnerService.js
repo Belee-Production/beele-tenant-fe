@@ -30,7 +30,7 @@ export default class StoreOwnerService {
    * }}
    */
   static async store(data, token, file) {
-    return await api.post('/pemilik-toko', { body: StoreOwner.toApiData(data), token, file: { photo: file } });
+    return await api.post('/pemilik-toko', { body: StoreOwner.toApiData(data), token, file: { foto: file } });
   }
 
   /**

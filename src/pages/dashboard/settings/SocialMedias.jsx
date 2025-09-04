@@ -57,7 +57,7 @@ const SocialMedias = () => {
       sorter: (a, b) => a.link.length - b.link.length,
       searchable: true,
       render: (_, record) => (
-        <Button icon={<GlobalOutlined />} onClick={() => window.open(record.item, '_blank')}>
+        <Button icon={<GlobalOutlined />} onClick={() => window.open(record.link, '_blank')}>
           Kunjungi
         </Button>
       )
@@ -87,7 +87,7 @@ const SocialMedias = () => {
       title: `Tambah ${Modul.SOCIAL_MEDIA}`,
       formFields: socialMediaFormFields,
       onSubmit: async (values) => {
-        const { message, isSuccess } = await updateSocialMedia.execute(item.id, { ...values, link: 'https://' + parseUrl(item.link) }, token);
+        const { message, isSuccess } = await updateSocialMedia.execute(item.id, { ...values, link: 'https://' + parseUrl(values.link) }, token);
         if (isSuccess) {
           success('Berhasil', message);
           fetchSocialMedias({ token: token });
@@ -158,7 +158,7 @@ const SocialMedias = () => {
                 danger
                 onClick={() => {
                   modal.delete.batch({
-                    title: `Hapus ${selectedItem.length} ${Modul.REGISTRANTS} Yang Dipilih ? `,
+                    title: `Hapus ${selectedItem.length} ${Modul.SOCIAL_MEDIA} Yang Dipilih ? `,
                     onSubmit: async () => {
                       const ids = selectedItem.map((item) => item.id);
                       const { message, isSuccess } = await deleteBatchSocialMedias.execute(ids, token);

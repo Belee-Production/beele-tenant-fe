@@ -1,11 +1,12 @@
+import { useStoreOwner } from '@/hooks/useStoreOwner';
 import { useStoreProfile } from '@/hooks/useStoreProfile';
 import dateFormatter from '@/utils/dateFormatter';
-import getInitials from '@/utils/getInitials';
-import { EnvironmentOutlined, FacebookFilled, FieldTimeOutlined, InstagramFilled, ShopOutlined, YoutubeFilled } from '@ant-design/icons';
+import { EnvironmentOutlined, FacebookFilled, FieldTimeOutlined, InstagramFilled, ShopOutlined, UserOutlined, YoutubeFilled } from '@ant-design/icons';
 import { Alert, Avatar, Card, Skeleton, Typography } from 'antd';
 
 const Dashboard = () => {
   const { data: storeProfile, isLoading } = useStoreProfile();
+  const { data: storeOwener } = useStoreOwner();
 
   return (
     <div className="grid grid-cols-12 gap-4">
@@ -19,12 +20,7 @@ const Dashboard = () => {
             </div>
             <div className="flex gap-x-6 px-4">
               <div className="mt-12 flex w-full flex-col gap-y-1 px-4">
-                <Typography.Title level={4} style={{ margin: 0 }}>
-                  <Skeleton.Input active />
-                </Typography.Title>
-                <Typography.Text>
-                  <Skeleton active />
-                </Typography.Text>
+                <Skeleton active />
               </div>
             </div>
 
@@ -66,9 +62,7 @@ const Dashboard = () => {
           </Card>
           <Card className="col-span-2 h-fit" title="Pemilik Toko">
             <div className="flex flex-col items-center gap-y-5">
-              <Avatar shape="circle" size={100} className="text-3xl uppercase" style={{ backgroundColor: '#fde3cf', color: '#f56a00' }}>
-                {getInitials('Mohamad Rafiq Daud')}
-              </Avatar>
+              <Avatar shape="circle" icon={<UserOutlined />} size={100} className="text-3xl uppercase" />
               <Typography.Title level={5} style={{ textAlign: 'center', margin: 0 }}>
                 <Skeleton.Input active />
               </Typography.Title>
@@ -87,7 +81,7 @@ const Dashboard = () => {
           <Card className="col-span-10" cover={<img src="/image_asset/card_background.png" className="h-32 object-cover" />}>
             <div className="relative px-4">
               <div className="absolute -top-16">
-                <Avatar size={90} icon={<ShopOutlined />} style={{ backgroundColor: '#fff', padding: '12px', color: 'black' }} className="shadow-md" />
+                <Avatar size={90} src={storeProfile?.logo} style={{ backgroundColor: '#fff', padding: '12px' }} className="shadow-md" />
               </div>
             </div>
             <div className="flex gap-x-6 px-4">
@@ -136,11 +130,9 @@ const Dashboard = () => {
           </Card>
           <Card className="col-span-2 h-fit" title="Pemilik Toko">
             <div className="flex flex-col items-center gap-y-5">
-              <Avatar shape="circle" size={100} className="text-3xl uppercase" style={{ backgroundColor: '#fde3cf', color: '#f56a00' }}>
-                {getInitials(storeProfile?.owner_name)}
-              </Avatar>
+              <Avatar shape="circle" size={100} src={storeOwener?.photo} style={{ backgroundColor: '#fff' }} className="shadow-md" />
               <Typography.Title level={5} style={{ textAlign: 'center', margin: 0 }}>
-                {storeProfile?.owner_name}
+                {storeOwener?.owner_name}
               </Typography.Title>
             </div>
           </Card>

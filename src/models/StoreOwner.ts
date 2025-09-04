@@ -1,8 +1,5 @@
-import { DatatableColumn, FormField as FormFieldType, Override } from '@/types';
-import strings from '@/utils/strings';
-import { DescriptionsItemType } from 'antd/es/descriptions';
 import Model from './Model';
-import { InputType } from '@/constants';
+import asset from '@/utils/asset';
 
 export interface IncomingApiData {
   nama_pemilik: string;
@@ -43,7 +40,7 @@ export default class StoreOwner extends Model {
 
   public static fromApiData<T extends IncomingApiData | IncomingApiData[]>(apiData: T): ReturnType<T, IncomingApiData, StoreOwner> {
     if (Array.isArray(apiData)) return apiData.map((object) => this.fromApiData(object)) as ReturnType<T, IncomingApiData, StoreOwner>;
-    return new StoreOwner(apiData.nama_pemilik, apiData.deskripsi, apiData.telepon, apiData.jabatan, apiData.foto) as ReturnType<T, IncomingApiData, StoreOwner>;
+    return new StoreOwner(apiData.nama_pemilik, apiData.deskripsi, apiData.telepon, apiData.jabatan, asset(apiData.foto)) as ReturnType<T, IncomingApiData, StoreOwner>;
   }
 
   public static toApiData<T extends FormValue | FormValue[]>(storeOwner: T): ReturnType<T, FormValue, OutgoingApiData> {

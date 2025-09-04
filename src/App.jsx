@@ -8,7 +8,7 @@ import './index.css';
 import { flattenLandingLinks } from './utils/landingLink';
 import { Notfound } from './pages/result';
 import { Settings } from './pages/dashboard';
-import { StoreProfileProvider } from './providers';
+import { OwnerStoreProvider, ProfileStoreProvider } from './providers';
 
 function App() {
   const { user } = useAuth();
@@ -32,9 +32,11 @@ function App() {
         {
           element: (
             <>
-              <StoreProfileProvider>
-                <DashboardLayout />
-              </StoreProfileProvider>
+              <OwnerStoreProvider>
+                <ProfileStoreProvider>
+                  <DashboardLayout />
+                </ProfileStoreProvider>
+              </OwnerStoreProvider>
             </>
           ),
           children: [
